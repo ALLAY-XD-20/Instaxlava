@@ -1,11 +1,8 @@
 jdk:
   - openjdk21
 
-before_install:
-  - chmod +x gradlew
-
 install:
-  - ./gradlew clean build -x test --no-daemon
+  - gradle clean build -x test --no-daemon
 
 build:
-  - ./gradlew build -x test --no-daemon
+  - gradle build -x test --no-daemon
