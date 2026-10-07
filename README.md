@@ -37,7 +37,7 @@ Push to GitHub, then in your Lavalink `application.yml`:
 ```yaml
 lavalink:
   plugins:
-    - dependency: "com.github.<your-github-user>:instaxlava:{VERSION}"
+    - dependency: "com.github.ALLAY-XD-20:instaxlava:1.1.1"
       repository: "https://jitpack.io"
 ```
 
