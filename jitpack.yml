@@ -1,2 +1,8 @@
 jdk:
-  - openjdk17
+  - openjdk21
+
+install:
+  - gradle clean build -x test --no-daemon
+
+build:
+  - gradle build -x test --no-daemon
