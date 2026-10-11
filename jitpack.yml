@@ -2,5 +2,8 @@
 jdk:
   - openjdk17
 
+before_install:
+  - git config --global --add safe.directory /build
+
 install:
-  - ./gradlew clean publishToMavenLocal
+  - gradle clean publishToMavenLocal
