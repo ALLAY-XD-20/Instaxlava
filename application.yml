@@ -1,0 +1,38 @@
+# Used by `./gradlew runLavalink` (the template's test server).
+# To use the plugin on your own Lavalink, copy only the `plugins:` block into your application.yml.
+server:
+  port: 2333
+  address: 0.0.0.0
+
+lavalink:
+  server:
+    password: "youshallnotpass"
+    sources:
+      http: true
+  # Optional: a search source for audio-page mirroring (mirrorEnabled). Use the current version from its repo.
+  # plugins:
+  #   - dependency: "dev.lavalink.youtube:youtube-plugin:{VERSION}"
+  #     snapshot: false
+
+plugins:
+  instaxlava:
+    engine: enable
+    # Optional tuning (all have defaults):
+    # sessionTtlMinutes: 30
+    # inspectStreams: true
+    # probeDuration: true
+    # cookies: "sessionid=...; csrftoken=...; ds_user_id=..."   # needed if Instagram blocks your server IP
+    # urlCacheTtlSeconds: 900
+    # maxConcurrentRequests: 4
+    # maxRetries: 3
+    # preferDashAudio: false
+    # mirrorEnabled: true
+    # mirrorSearchPrefixes: ["ytmsearch:", "ytsearch:"]
+    # cookies: ""
+    # proxyHost: ""
+    # proxyPort: 0
+
+logging:
+  level:
+    root: INFO
+    dev.pawan.instaxlava: INFO

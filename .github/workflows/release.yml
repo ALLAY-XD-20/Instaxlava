@@ -1,0 +1,43 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+      - "[0-9]*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check tag matches build version
+        run: |
+          V=$(grep -E '^version = ' build.gradle.kts | sed -E 's/version = "(.*)"/\1/')
+          if [ "v$V" != "${GITHUB_REF_NAME}" ] && [ "$V" != "${GITHUB_REF_NAME}" ]; then
+            echo "Tag ${GITHUB_REF_NAME} does not match build.gradle.kts version $V"
+            exit 1
+          fi
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.10.2"
+
+      - name: Build
+        run: gradle build --no-daemon
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: InstaXlava ${{ github.ref_name }}
+          body_path: RELEASE_NOTES.md
+          files: build/libs/instaxlava-*.jar
