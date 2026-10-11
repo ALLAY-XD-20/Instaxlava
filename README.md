@@ -86,7 +86,7 @@ HTTP 403 or 429, Instagram is blocking your server IP: set `proxyHost` / `proxyP
 ```yaml
 lavalink:
   plugins:
-    - dependency: "com.github.ALLAY-XD-20:InstaXlava:1.1.0"
+    - dependency: "com.github.ALLAY-XD-20:InstaXlava:2.0.0"
       repository: "https://jitpack.io"
       snapshot: false
 ```
