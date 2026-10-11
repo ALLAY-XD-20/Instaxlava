@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-1.1.0-8A3AB9?style=for-the-badge" alt="version 1.1.0">
+  <img src="https://img.shields.io/badge/version-2.0.0-8A3AB9?style=for-the-badge" alt="version 1.1.0">
   <img src="https://img.shields.io/badge/Lavalink-4.x-C13584?style=for-the-badge" alt="Lavalink 4.x">
   <img src="https://img.shields.io/badge/Java-17%2B-F77737?style=for-the-badge&logo=openjdk&logoColor=white" alt="Java 17+">
   <img src="https://img.shields.io/badge/build-Gradle-02303A?style=for-the-badge&logo=gradle&logoColor=white" alt="Gradle">
