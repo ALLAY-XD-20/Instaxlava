@@ -2,7 +2,14 @@
 
 All notable changes to InstaXlava are listed here.
 
-## [1.1.0] - 2026-10-07
+## [2.0.1] - 2026-10-11
+
+### Added
+- Logged-in media endpoint, used first when `cookies` is set: works from hosting-provider IPs that Instagram blocks, and returns title, author, artwork and length (also for videos inside carousels)
+- Clear warning in the log, with the fix, when Instagram answers 401, 403 or 429 and no cookie is configured
+- Log note when a page has preview tags but no video
+
+## [2.0.0] - 2026-10-07
 
 ### Fixed
 - Tracks now always carry metadata: title, author, artwork and length. Missing fields are filled from the page's Open Graph tags, and a missing length is read from the MP4 header
