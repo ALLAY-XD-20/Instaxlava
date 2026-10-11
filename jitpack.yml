@@ -1,0 +1,7 @@
+jdk:
+  - openjdk17
+before_install:
+  - sdk install gradle 8.10.2
+  - sdk use gradle 8.10.2
+install:
+  - gradle clean publishToMavenLocal
