@@ -48,6 +48,7 @@ public class IGMediaResolver {
     private static final String CRAWLER_UA = "facebookexternalhit/1.1";
     private static final String DEFAULT_DOC_ID = "10015901848480474";
     private static final String CLIPS_DOC_ID = "27695069083459414";
+    private static final String WEB_APP_ID = "936619743392459";
     private static final long EXPIRY_SAFETY_MS = 60_000L;
     private static final ThreadLocal<StringBuilder> TRAIL = ThreadLocal.withInitial(StringBuilder::new);
 
@@ -107,7 +108,12 @@ public class IGMediaResolver {
         }
 
         if (info == null) {
-            log.warn("Instagram {} could not be resolved -> {}", key, TRAIL.get());
+            String trail = TRAIL.get().toString();
+            log.warn("Instagram {} could not be resolved -> {}", key, trail);
+            if (cfg.getCookies().isBlank() && trail.matches(".*HTTP (401|403|429).*")) {
+                log.warn("Instagram is refusing logged-out requests from this server's IP. "
+                        + "Set plugins.instaxlava.cookies (a logged-in cookie) or proxyHost/proxyPort, see the README.");
+            }
             cache.remove(key);
             return null;
         }
@@ -270,7 +276,9 @@ public class IGMediaResolver {
 
     private MediaInfo resolvePost(String code, String segment) {
         OgPage og = null;
-        MediaInfo m = queryClips(code);
+        MediaInfo m = null;
+        if (!cfg.getCookies().isBlank()) m = queryMediaInfo(code);
+        if (m == null) m = queryClips(code);
 
         if (m == null) m = queryEmbed(code);
 
@@ -342,7 +350,8 @@ public class IGMediaResolver {
 
             String url = "https://www.instagram.com/graphql/query/?doc_id=" + CLIPS_DOC_ID
                     + "&variables=" + URLEncoder.encode(vars.toString(), StandardCharsets.UTF_8);
-            HttpRequest req = base(url).header("Accept", "*/*").timeout(Duration.ofSeconds(15)).GET().build();
+            HttpRequest req = base(url).header("Accept", "*/*").header("X-IG-App-ID", WEB_APP_ID)
+                    .header("X-ASBD-ID", "129477").timeout(Duration.ofSeconds(15)).GET().build();
             HttpResponse<String> resp = send(req);
             if (resp.statusCode() != 200 || resp.body() == null) {
                 note("clips: HTTP " + resp.statusCode());
@@ -397,6 +406,78 @@ public class IGMediaResolver {
             note("clips: " + e.getClass().getSimpleName() + " " + e.getMessage());
             return null;
         }
+    }
+
+    /** Logged-in media info endpoint (needs the cookies option). Full metadata, works from datacenter IPs. */
+    private MediaInfo queryMediaInfo(String code) {
+        try {
+            BigInteger mediaId = IGUrlParser.shortcodeToMediaId(code);
+            if (mediaId == null) {
+                note("media info: bad shortcode");
+                return null;
+            }
+            HttpRequest.Builder b = base("https://i.instagram.com/api/v1/media/" + mediaId + "/info/")
+                    .header("Accept", "*/*")
+                    .header("X-IG-App-ID", WEB_APP_ID)
+                    .header("X-ASBD-ID", "129477")
+                    .header("Origin", "https://www.instagram.com")
+                    .header("Referer", "https://www.instagram.com/")
+                    .timeout(Duration.ofSeconds(15));
+            String csrf = cookieValue(cfg.getCookies(), "csrftoken");
+            if (csrf != null) b.header("X-CSRFToken", csrf);
+            HttpResponse<String> resp = send(b.GET().build());
+            if (resp.statusCode() != 200 || resp.body() == null) {
+                note("media info: HTTP " + resp.statusCode() + (resp.statusCode() == 401 || resp.statusCode() == 403 ? " (cookie expired or invalid?)" : ""));
+                return null;
+            }
+            JsonNode item = JSON.readTree(resp.body()).at("/items/0");
+            if (!present(item)) {
+                note("media info: no item in response");
+                return null;
+            }
+            JsonNode vid = item;
+            String url = firstVideoUrl(item.path("video_versions"));
+            if (url == null) {
+                for (JsonNode child : item.path("carousel_media")) {
+                    url = firstVideoUrl(child.path("video_versions"));
+                    if (url != null) { vid = child; break; }
+                }
+            }
+            if (url == null) {
+                note("media info: no video in this post");
+                return null;
+            }
+            long dur = (long) (vid.path("video_duration").asDouble(0) * 1000);
+            if (dur <= 0) dur = (long) (item.path("video_duration").asDouble(0) * 1000);
+            String art = first(txt(vid.at("/image_versions2/candidates/0/url")),
+                    txt(item.at("/image_versions2/candidates/0/url")), "");
+            note("media info: ok");
+            return new MediaInfo(url, cleanTitle(txt(item.at("/caption/text"))),
+                    first(txt(item.at("/user/username")), "Unknown"), dur, art);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return null;
+        } catch (Exception e) {
+            note("media info: " + e.getClass().getSimpleName() + " " + e.getMessage());
+            return null;
+        }
+    }
+
+    private static String firstVideoUrl(JsonNode versions) {
+        for (JsonNode v : versions) {
+            String u = txt(v.path("url"));
+            if (u != null) return u;
+        }
+        return null;
+    }
+
+    private static String cookieValue(String cookieHeader, String name) {
+        if (cookieHeader == null) return null;
+        for (String part : cookieHeader.split(";")) {
+            String kv = part.trim();
+            if (kv.startsWith(name + "=")) return kv.substring(name.length() + 1);
+        }
+        return null;
     }
 
     /** Fallback: public embed page, no session needed. */
@@ -472,6 +553,7 @@ public class IGMediaResolver {
                 Matcher m = Pattern.compile(": [\"\u201c](.*)[\"\u201d]\\.?\\s*$", Pattern.DOTALL).matcher(desc);
                 if (m.find()) caption = blankToNull(m.group(1));
             }
+            if (video == null) note("og: page has no video tag");
             return new OgPage(video, caption == null ? null : cleanTitle(caption), author, image);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
