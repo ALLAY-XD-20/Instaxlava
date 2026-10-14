@@ -1,10 +1,11 @@
 plugins {
     java
+    `maven-publish`
     id("dev.arbjerg.lavalink.gradle-plugin") version "1.1.2"
 }
 
-group = "dev.pawan"
-version = "2.0.3"
+group = "com.github.ALLAY-XD-20"
+version = "2.4.4"
 
 lavalinkPlugin {
     name = "instaxlava"
@@ -15,7 +16,7 @@ lavalinkPlugin {
 }
 
 base {
-    archivesName = "instaxlava"
+    archivesName.set("instaxlava")
 }
 
 java {
@@ -31,8 +32,6 @@ repositories {
 }
 
 dependencies {
-    // Everything below is provided by the Lavalink server at runtime (compileOnly = not bundled).
-    // Declared explicitly so the build does not depend on what the Gradle plugin puts on the classpath.
     compileOnly("dev.arbjerg.lavalink:plugin-api:4.0.8")
     compileOnly("dev.arbjerg:lavaplayer:2.2.2")
     compileOnly("org.springframework.boot:spring-boot:3.2.5")
