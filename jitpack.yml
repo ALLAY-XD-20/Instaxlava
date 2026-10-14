@@ -1,12 +1,7 @@
-
 jdk:
   - openjdk17
-
 before_install:
-  - git config --global --add safe.directory /build
-  - chmod +x gradlew
-
+  - sdk install gradle 8.10.2
+  - sdk use gradle 8.10.2
 install:
-  - java -version
-  - ./gradlew --version
-  - ./gradlew clean build publishToMavenLocal
+  - gradle clean publishToMavenLocal
